@@ -1,0 +1,4 @@
+{
+  "homeassistant__GetLiveContext": "Get the current state of devices, sensors or an area in this home, such as whether a light is on or the temperature in a room.",
+  "llm__GetDateTime": "Get the current date and time. Use only when the user asks about the date or time."
+}

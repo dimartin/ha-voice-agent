@@ -1,0 +1,9 @@
+# The Wyoming speech-to-text filter that sits in front of the STT server (see README).
+FROM python:3.12-slim
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY ha_voice_agent ./ha_voice_agent
+RUN pip install --no-cache-dir ".[stt]"
+ENV LISTEN_PORT=10300
+EXPOSE 10300
+CMD ["ha-voice-stt-filter"]

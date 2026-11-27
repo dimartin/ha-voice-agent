@@ -1,0 +1,1250 @@
+{
+ "model": "local-model",
+ "stream": true,
+ "messages": [
+  {
+   "role": "system",
+   "content": "You are a voice assistant. Answer in one or two short sentences.\nYou ARE equipped to answer questions about the current state of\nthe home using the `homeassistant__GetLiveContext` tool. This is a primary function. Do not state you lack the\nfunctionality if the question requires live data.\nIf the user asks about device existence/type (e.g., \"Do I have lights in the bedroom?\"): Answer\nfrom the static context below.\nIf the user asks about the CURRENT state, value, or mode (e.g., \"Is the lock locked?\",\n\"Is the fan on?\", \"What mode is the thermostat in?\", \"What is the temperature outside?\"):\n    1.  Recognize this requires live data.\n    2.  You MUST call `homeassistant__GetLiveContext`. This tool will provide the needed real-time information (like temperature from the local weather, lock status, etc.).\n    3.  Use the tool's response** to answer the user accurately (e.g., \"The temperature outside is [value from tool].\").\nFor general knowledge questions not about the home: Answer truthfully from internal knowledge.\n\nStatic Context: An overview of the areas and the devices in this smart home:\n- names: Kitchen Light\n  domain: light\n  areas: Kitchen\n- names: Kitchen Counter\n  domain: light\n  areas: Kitchen\n- names: Coffee Maker\n  domain: switch\n  areas: Kitchen\n- names: Fridge Temperature\n  domain: sensor\n  areas: Kitchen\n- names: Dining Room Lamp, Lamp\n  domain: light\n  areas: Dining Room\n- names: Dining Room Speaker\n  domain: media_player\n  areas: Dining Room\n- names: Dining Room TV\n  domain: media_player\n  areas: Dining Room\n- names: Thermostat\n  domain: climate\n  areas: Dining Room\n- names: Dining Room Temperature\n  domain: sensor\n  areas: Dining Room\n- names: Bedroom Ceiling\n  domain: light\n  areas: Bedroom\n- names: Bedroom Fan\n  domain: fan\n  areas: Bedroom\n- names: Office Desk Lamp\n  domain: light\n  areas: Office\n- names: Office Speaker, office dot, dot\n  domain: media_player\n  areas: Office\n- names: Garage Door\n  domain: cover\n  areas: Garage\n- names: Porch Light\n  domain: light\n  areas: Porch\n- names: Front Door Motion\n  domain: binary_sensor\n  areas: Porch\n- names: Forecast Home\n  domain: weather\n- names: Shopping List\n  domain: todo\n\nWhen controlling Home Assistant always call the intent tools. Use intent__HassTurnOn to lock and intent__HassTurnOff to unlock a lock. When controlling a device, prefer passing just name and domain. When controlling an area, prefer passing just area name and domain.\nYou are in area Kitchen (floor Ground Floor) and all generic commands like 'turn on the lights' should target this area."
+  },
+  {
+   "role": "user",
+   "content": "play some jazz on the dot"
+  }
+ ],
+ "tools": [
+  {
+   "function": {
+    "description": "Broadcast a message through the home",
+    "name": "assist_satellite__HassBroadcast",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "message": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "message"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Sets the target temperature of a climate device or entity",
+    "name": "climate__HassClimateSetTemperature",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "temperature": {
+       "type": "number"
+      }
+     },
+     "required": [
+      "temperature"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Sets a fan's speed by percentage",
+    "name": "fan__HassFanSetSpeed",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "domain": {
+       "items": {
+        "enum": [
+         "fan"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "percentage": {
+       "description": "The speed percentage of the fan",
+       "maximum": 100,
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "required": [
+      "percentage"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Provides real-time information about the CURRENT state, value, or mode of devices, sensors, entities, or areas. Use this tool for: 1. Answering questions about current conditions (e.g., 'Is the light on?'). 2. As the first step in conditional actions (e.g., 'If the weather is rainy, turn off sprinklers' requires checking the weather first). You may filter for devices by name, domain, and area, including combining those filters. Prefer filtering by domain when searching for multiple devices of the same type.",
+    "name": "homeassistant__GetLiveContext",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "description": "Filter entities by area name or alias (case-insensitive).",
+       "type": "string"
+      },
+      "domain": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        }
+       ],
+       "description": "Filter entities by domain (e.g. 'light', 'sensor'). Accepts a single domain or a list."
+      },
+      "name": {
+       "description": "Filter entities by name or alias (case-insensitive).",
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Turns on/opens/presses a device or entity. For locks, this performs a 'lock' action. Use for requests like 'turn on', 'activate', 'enable', or 'lock'.",
+    "name": "intent__HassTurnOn",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "outlet",
+         "switch",
+         "water",
+         "gas",
+         "identify",
+         "restart",
+         "update",
+         "tv",
+         "speaker",
+         "receiver",
+         "projector",
+         "awning",
+         "blind",
+         "curtain",
+         "damper",
+         "door",
+         "garage",
+         "gate",
+         "shade",
+         "shutter",
+         "window"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Turns off/closes a device or entity. For locks, this performs an 'unlock' action. Use for requests like 'turn off', 'deactivate', 'disable', or 'unlock'.",
+    "name": "intent__HassTurnOff",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "outlet",
+         "switch",
+         "water",
+         "gas",
+         "identify",
+         "restart",
+         "update",
+         "tv",
+         "speaker",
+         "receiver",
+         "projector",
+         "awning",
+         "blind",
+         "curtain",
+         "damper",
+         "door",
+         "garage",
+         "gate",
+         "shade",
+         "shutter",
+         "window"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Sets the position of a device or entity",
+    "name": "intent__HassSetPosition",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "awning",
+         "blind",
+         "curtain",
+         "damper",
+         "door",
+         "garage",
+         "gate",
+         "shade",
+         "shutter",
+         "window",
+         "water",
+         "gas"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "position": {
+       "maximum": 100,
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "required": [
+      "position"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Stops a moving device or entity",
+    "name": "intent__HassStopMoving",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "awning",
+         "blind",
+         "curtain",
+         "damper",
+         "door",
+         "garage",
+         "gate",
+         "shade",
+         "shutter",
+         "window",
+         "water",
+         "gas"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Starts a new timer",
+    "name": "intent__HassStartTimer",
+    "parameters": {
+     "additionalProperties": false,
+     "anyOf": [
+      {
+       "required": [
+        "hours"
+       ]
+      },
+      {
+       "required": [
+        "minutes"
+       ]
+      },
+      {
+       "required": [
+        "seconds"
+       ]
+      }
+     ],
+     "properties": {
+      "conversation_command": {
+       "type": "string"
+      },
+      "hours": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "minutes": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "name": {
+       "type": "string"
+      },
+      "seconds": {
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Cancels a timer",
+    "name": "intent__HassCancelTimer",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "start_hours": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_minutes": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_seconds": {
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Cancels all timers",
+    "name": "intent__HassCancelAllTimers",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Adds more time to a timer",
+    "name": "intent__HassIncreaseTimer",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "hours": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "minutes": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "name": {
+       "type": "string"
+      },
+      "seconds": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_hours": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_minutes": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_seconds": {
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Removes time from a timer",
+    "name": "intent__HassDecreaseTimer",
+    "parameters": {
+     "additionalProperties": false,
+     "anyOf": [
+      {
+       "required": [
+        "hours"
+       ]
+      },
+      {
+       "required": [
+        "minutes"
+       ]
+      },
+      {
+       "required": [
+        "seconds"
+       ]
+      }
+     ],
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "hours": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "minutes": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "name": {
+       "type": "string"
+      },
+      "seconds": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_hours": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_minutes": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_seconds": {
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Pauses a running timer",
+    "name": "intent__HassPauseTimer",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "start_hours": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_minutes": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_seconds": {
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Resumes a paused timer",
+    "name": "intent__HassUnpauseTimer",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "start_hours": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_minutes": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_seconds": {
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Reports the current status of timers",
+    "name": "intent__HassTimerStatus",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "start_hours": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_minutes": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "start_seconds": {
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Execute Home Assistant WeatherForecast intent",
+    "name": "intent_script__WeatherForecast",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Sets the brightness percentage or color of a light",
+    "name": "light__HassLightSet",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "brightness": {
+       "description": "The brightness percentage of the light between 0 and 100, where 0 is off and 100 is fully lit",
+       "maximum": 100,
+       "minimum": 0,
+       "type": "integer"
+      },
+      "color": {
+       "type": "string"
+      },
+      "domain": {
+       "items": {
+        "enum": [
+         "light"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "temperature": {
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Provides the current date and time.",
+    "name": "llm__GetDateTime",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {},
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Resumes a media player",
+    "name": "media_player__HassMediaUnpause",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "tv",
+         "speaker",
+         "receiver",
+         "projector"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "enum": [
+         "media_player"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Pauses a media player",
+    "name": "media_player__HassMediaPause",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "tv",
+         "speaker",
+         "receiver",
+         "projector"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "enum": [
+         "media_player"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Skips a media player to the next item",
+    "name": "media_player__HassMediaNext",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "tv",
+         "speaker",
+         "receiver",
+         "projector"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "enum": [
+         "media_player"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Replays the previous item for a media player",
+    "name": "media_player__HassMediaPrevious",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "tv",
+         "speaker",
+         "receiver",
+         "projector"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "enum": [
+         "media_player"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Sets the volume percentage of a media player",
+    "name": "media_player__HassSetVolume",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "tv",
+         "speaker",
+         "receiver",
+         "projector"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "enum": [
+         "media_player"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "volume_level": {
+       "description": "The volume percentage of the media player",
+       "maximum": 100,
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "required": [
+      "volume_level"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Increases or decreases the volume of a media player",
+    "name": "media_player__HassSetVolumeRelative",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "volume_step": {
+       "anyOf": [
+        {
+         "enum": [
+          "up",
+          "down"
+         ],
+         "type": "string"
+        },
+        {
+         "maximum": 100,
+         "minimum": -100,
+         "type": "integer"
+        }
+       ]
+      }
+     },
+     "required": [
+      "volume_step"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Mutes a media player",
+    "name": "media_player__HassMediaPlayerMute",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "tv",
+         "speaker",
+         "receiver",
+         "projector"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "enum": [
+         "media_player"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "is_volume_muted": {
+       "description": "Whether the media player should be muted or unmuted",
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Unmutes a media player",
+    "name": "media_player__HassMediaPlayerUnmute",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "device_class": {
+       "items": {
+        "enum": [
+         "tv",
+         "speaker",
+         "receiver",
+         "projector"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "domain": {
+       "items": {
+        "enum": [
+         "media_player"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "is_volume_muted": {
+       "description": "Whether the media player should be muted or unmuted",
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Searches for media and plays the first result",
+    "name": "media_player__HassMediaSearchAndPlay",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "area": {
+       "type": "string"
+      },
+      "floor": {
+       "type": "string"
+      },
+      "media_class": {
+       "enum": [
+        "album",
+        "app",
+        "artist",
+        "channel",
+        "composer",
+        "contributing_artist",
+        "directory",
+        "episode",
+        "game",
+        "genre",
+        "image",
+        "movie",
+        "music",
+        "playlist",
+        "podcast",
+        "season",
+        "track",
+        "tv_show",
+        "url",
+        "video"
+       ],
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      },
+      "search_query": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "search_query"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Query a to-do list to find out what items are on it. Use this to answer questions like 'What's on my task list?' or 'Read my grocery list'. Filters items by status (needs_action, completed, all).",
+    "name": "todo__get_items",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "status": {
+       "default": "needs_action",
+       "description": "Filter returned items by status, by default returns incomplete items",
+       "enum": [
+        "needs_action",
+        "completed",
+        "all"
+       ],
+       "type": "string"
+      },
+      "todo_list": {
+       "enum": [
+        "Shopping list"
+       ],
+       "type": "string"
+      }
+     },
+     "required": [
+      "todo_list"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Add item to a todo list",
+    "name": "todo__HassListAddItem",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "item": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "item",
+      "name"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Complete item on a todo list",
+    "name": "todo__HassListCompleteItem",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "item": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "item",
+      "name"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Remove one or more items from a todo list",
+    "name": "todo__HassListRemoveItem",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "item": {
+       "type": "string"
+      },
+      "name": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "item",
+      "name"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  }
+ ]
+}

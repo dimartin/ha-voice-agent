@@ -1,0 +1,27 @@
+[project]
+name = "ha-voice-agent"
+version = "0.1.0"
+description = "Make Home Assistant's local-LLM voice replies short, speakable and cheap to prompt"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+dependencies = ["aiohttp>=3.10,<4"]
+
+[project.optional-dependencies]
+tts = ["wyoming==1.7.2"]
+stt = ["wyoming==1.7.2"]
+dev = ["pytest>=8", "wyoming==1.7.2"]
+
+[project.scripts]
+ha-voice-agent = "ha_voice_agent.app:main"
+ha-voice-tts-filter = "ha_voice_agent.tts_filter:main"
+ha-voice-stt-filter = "ha_voice_agent.stt_filter:main"
+ha-voice-suggest = "ha_voice_agent.suggest:main"
+ha-voice-report = "ha_voice_agent.report:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["ha_voice_agent"]

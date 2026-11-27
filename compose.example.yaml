@@ -1,0 +1,67 @@
+# Example: run ha-voice-agent next to Home Assistant.
+# In HA, point the OpenAI-compatible conversation integration (e.g. llama.cpp)
+# at http://<this-host>:8011/v1 instead of your LLM server.
+services:
+  ha-voice-agent:
+    build: .
+    container_name: ha-voice-agent
+    restart: unless-stopped
+    ports:
+      - "8011:8011"
+    environment:
+      UPSTREAM: http://llm-host:8000      # your OpenAI-compatible LLM server
+      MAX_WORDS: "35"                     # spoken answers end at a sentence boundary past this
+      AGENT_MODE: "1"                     # replace HA's prompt with config/agent-prompt.txt
+      DROP_PARAMS: floor,device_class,media_class
+      # Tools HA's built-in intents already cover by exact phrase:
+      DROP_TOOLS: intent__HassIncreaseTimer,intent__HassDecreaseTimer,intent__HassPauseTimer,intent__HassUnpauseTimer,intent__HassCancelAllTimers,intent__HassStopMoving,intent__HassSetPosition,media_player__HassMediaPlayerMute,media_player__HassMediaPlayerUnmute,media_player__HassMediaPrevious,media_player__HassSetVolumeRelative,todo__HassListCompleteItem,todo__HassListRemoveItem
+    volumes:
+      - ./config:/app/config:ro           # your prompt and tool descriptions
+      - ./data:/data                      # voice-log.jsonl
+
+  # Optional: rewrite text before Piper reads it (see README, "Text-to-speech filter").
+  # Point Home Assistant's Wyoming integration at this port instead of Piper's.
+  piper:
+    image: rhasspy/wyoming-piper:latest
+    restart: unless-stopped
+    command: --voice en_US-lessac-medium
+    volumes:
+      - ./piper-data:/data
+
+  tts-filter:
+    build:
+      context: .
+      dockerfile: Dockerfile.tts
+    restart: unless-stopped
+    environment:
+      UPSTREAM_HOST: piper
+      UPSTREAM_PORT: "10200"
+    ports:
+      - "10200:10200"
+    depends_on:
+      - piper
+
+  # Optional: make number forms in transcripts agree with your device names (see README,
+  # "Speech-to-text filter"). Point Home Assistant's Wyoming STT integration here.
+  whisper:
+    image: rhasspy/wyoming-whisper:latest
+    restart: unless-stopped
+    command: --language en
+    volumes:
+      - ./whisper-data:/data
+
+  stt-filter:
+    build:
+      context: .
+      dockerfile: Dockerfile.stt
+    restart: unless-stopped
+    environment:
+      UPSTREAM_HOST: whisper
+      UPSTREAM_PORT: "10300"
+      NAMES_FILE: /data/stt-names.json    # ha-voice-stt-filter export-names writes it
+    volumes:
+      - ./data:/data
+    ports:
+      - "10300:10300"
+    depends_on:
+      - whisper

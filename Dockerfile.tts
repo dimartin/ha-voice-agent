@@ -1,0 +1,9 @@
+# The Wyoming text-to-speech filter that sits in front of Piper (see README).
+FROM python:3.12-slim
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY ha_voice_agent ./ha_voice_agent
+RUN pip install --no-cache-dir ".[tts]"
+ENV LISTEN_PORT=10200
+EXPOSE 10200
+CMD ["ha-voice-tts-filter"]
